@@ -1,0 +1,17 @@
+{
+  "name": "healthcare-ceo-senate-testimony-alignment-tool",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone healthcare-focused Senate testimony alignment tool.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "worker": "node src/worker.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

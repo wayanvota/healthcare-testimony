@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Healthcare CEO Senate Testimony Alignment Tool</title>
+    <link rel="stylesheet" href="%BASE_PATH%/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Healthcare CEO Senate Testimony Alignment Tool</h1>
+          <p id="pathLabel">/healthcare-testimony</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="status-dot" id="healthStatus">Checking</span>
+          <button class="ghost" id="loadDemoButton" type="button">Load Demo</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="setup-panel" aria-label="Setup panel">
+          <form id="setupForm">
+            <section class="panel-section">
+              <h2>Setup Panel</h2>
+              <label>
+                Hearing title
+                <input name="hearingTitle" value="AI, Prior Authorization, and Patient Access in Medicare Advantage">
+              </label>
+              <label>
+                Healthcare topic
+                <input name="healthcareTopic" value="AI prior authorization Medicare Advantage patient access">
+              </label>
+              <label>
+                Company type
+                <select name="companyType">
+                  <option>payer</option>
+                  <option>provider</option>
+                  <option>hospital system</option>
+                  <option>pharmaceutical company</option>
+                  <option>biotech</option>
+                  <option>medtech</option>
+                  <option>digital health</option>
+                  <option selected>AI healthcare company</option>
+                  <option>PBM</option>
+                  <option>long-term care</option>
+                  <option>health IT</option>
+                  <option>nonprofit health organization</option>
+                  <option>other</option>
+                </select>
+              </label>
+              <div class="two-col">
+                <label>
+                  CEO name
+                  <input name="ceoName" value="Jordan Lee">
+                </label>
+                <label>
+                  Organization
+                  <input name="organizationName" value="CareRoute AI">
+                </label>
+              </div>
+              <label>
+                Date range
+                <input name="dateRange" placeholder="Optional">
+              </label>
+            </section>
+
+            <section class="panel-section">
+              <h3>Committees</h3>
+              <div class="check-grid">
+                <label><input type="checkbox" name="committees" value="finance" checked> Finance</label>
+                <label><input type="checkbox" name="committees" value="help" checked> HELP</label>
+                <label><input type="checkbox" name="committees" value="appropriations_lhhs"> Appropriations Labor-HHS</label>
+                <label><input type="checkbox" name="committees" value="aging" checked> Aging</label>
+                <label><input type="checkbox" name="committees" value="judiciary" checked> Judiciary</label>
+                <label><input type="checkbox" name="committees" value="homeland_security"> Homeland Security</label>
+                <label><input type="checkbox" name="autoDetect" value="1" checked> Auto-detect from topic</label>
+              </div>
+            </section>
+
+            <section class="panel-section">
+              <div class="two-col">
+                <label>
+                  Specific senators
+                  <input name="specificSenators" placeholder="Optional">
+                </label>
+                <label>
+                  Excluded senators
+                  <input name="excludeSenators" placeholder="Optional">
+                </label>
+              </div>
+              <label>
+                Testimony URL
+                <input name="testimonyUrl" placeholder="Optional">
+              </label>
+              <label>
+                Testimony text
+                <textarea name="testimonyText">Our AI-enabled prior authorization platform automates routine decisions, reduces administrative burden, and ensures patients get faster access to medically necessary care.</textarea>
+              </label>
+            </section>
+
+            <div class="button-row">
+              <button class="secondary" id="refreshButton" type="button">Refresh committee rosters</button>
+              <button class="primary" id="analyzeButton" type="submit">Run committee analysis</button>
+              <button class="secondary" id="selectedButton" type="button">Run selected-senator analysis</button>
+              <button class="secondary" id="markdownButton" type="button">Export Markdown</button>
+              <button class="secondary" id="pdfButton" type="button">Export PDF</button>
+            </div>
+          </form>
+        </aside>
+
+        <section class="dashboard">
+          <section class="summary-strip" id="executiveDashboard" aria-label="Executive dashboard"></section>
+
+          <section class="content-grid">
+            <article class="module matrix-module">
+              <div class="module-header">
+                <h2>Committee Alignment Matrix</h2>
+                <span id="matrixCount">0 senators</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Senator</th>
+                      <th>State</th>
+                      <th>Party</th>
+                      <th>Committee role</th>
+                      <th>Committee</th>
+                      <th>Alignment</th>
+                      <th>Risk</th>
+                      <th>Evidence</th>
+                      <th>Likely concern</th>
+                      <th>Source</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="matrixBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="module">
+              <div class="module-header">
+                <h2>Claim Analysis</h2>
+                <span id="claimCount">0 claims</span>
+              </div>
+              <div class="stack" id="claimAnalysis"></div>
+            </article>
+
+            <article class="module">
+              <div class="module-header">
+                <h2>Senator Cards</h2>
+                <span id="cardCount">0 cards</span>
+              </div>
+              <div class="cards" id="senatorCards"></div>
+            </article>
+
+            <article class="module">
+              <div class="module-header">
+                <h2>Red-Team Q&amp;A</h2>
+                <span id="questionCount">0 questions</span>
+              </div>
+              <div class="stack" id="questions"></div>
+            </article>
+
+            <article class="module rewrite-module">
+              <div class="module-header">
+                <h2>Rewrite Workspace</h2>
+                <span id="rewriteCount">0 rewrites</span>
+              </div>
+              <div class="stack" id="rewrites"></div>
+            </article>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <template id="emptyTemplate">
+      <div class="empty-state">Run analysis to populate this section.</div>
+    </template>
+
+    <script src="%BASE_PATH%/app.js" type="module"></script>
+  </body>
+</html>

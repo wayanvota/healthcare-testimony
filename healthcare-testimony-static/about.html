@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>About | Healthcare CEO Senate Testimony Alignment Tool</title>
+    <meta
+      name="description"
+      content="About the source-grounded healthcare Senate testimony preparation tool."
+    >
+    <style>
+      :root {
+        --off-black: #111111;
+        --cream: #faf9f6;
+        --white: #ffffff;
+        --fin: #ff5600;
+        --oat: #dedbd6;
+        --muted: #7b7b78;
+        --black-60: #626260;
+        --blue: #0007cb;
+        --red: #c41c1c;
+        --max: 1120px;
+        font-family: Saans, "Saans Fallback", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--off-black);
+        background: var(--cream);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--cream);
+        color: var(--off-black);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 20px 24px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        line-height: 1;
+        letter-spacing: -0.2px;
+      }
+
+      .mark {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--off-black);
+        border-radius: 4px;
+        background: var(--white);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: var(--black-60);
+        font-size: 16px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 4px;
+        border: 1px solid var(--off-black);
+        font-size: 16px;
+        line-height: 1.5;
+        transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+      }
+
+      .button:hover {
+        transform: scale(1.08);
+      }
+
+      .button:active {
+        transform: scale(0.92);
+      }
+
+      .button.primary {
+        background: var(--off-black);
+        color: var(--white);
+      }
+
+      .button.primary:hover {
+        background: var(--white);
+        color: var(--off-black);
+      }
+
+      .button.secondary {
+        background: transparent;
+        color: var(--off-black);
+      }
+
+      .hero,
+      .content,
+      .cta {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+      .hero {
+        padding-top: 70px;
+        padding-bottom: 44px;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.3;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h1 {
+        max-width: 940px;
+        margin: 18px 0 22px;
+        font-size: clamp(52px, 8vw, 88px);
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: clamp(-2.4px, -0.24vw, -1px);
+      }
+
+      .lede {
+        max-width: 760px;
+        color: var(--black-60);
+        font-size: 22px;
+        line-height: 1.24;
+        letter-spacing: -0.28px;
+      }
+
+      .orange {
+        color: var(--fin);
+      }
+
+      .content {
+        padding-top: 18px;
+        padding-bottom: 70px;
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 14px;
+      }
+
+      .side-card,
+      .section-card,
+      .cta-box {
+        border: 1px solid var(--oat);
+        border-radius: 8px;
+        background: var(--white);
+      }
+
+      .side-card {
+        align-self: start;
+        padding: 22px;
+        position: sticky;
+        top: 20px;
+      }
+
+      .side-card h2,
+      .section-card h2 {
+        margin: 0 0 14px;
+        font-size: 32px;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: -0.96px;
+      }
+
+      .side-card p,
+      .section-card p,
+      .section-card li {
+        color: var(--black-60);
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .side-card p {
+        margin: 0 0 18px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .section-card {
+        padding: 24px;
+      }
+
+      .section-card p {
+        margin: 0 0 14px;
+      }
+
+      .section-card p:last-child {
+        margin-bottom: 0;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      .issue-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .issue {
+        border: 1px solid var(--oat);
+        border-radius: 4px;
+        background: var(--cream);
+        padding: 10px 12px;
+        color: var(--off-black);
+        font-size: 14px;
+      }
+
+      .issue::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 8px;
+        border-radius: 2px;
+        background: var(--fin);
+      }
+
+      .warning {
+        border-left: 4px solid var(--fin);
+        background: var(--cream);
+        padding: 16px;
+        color: var(--black-60);
+      }
+
+      .cta {
+        padding-bottom: 80px;
+      }
+
+      .cta-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 28px;
+        background: var(--off-black);
+        color: var(--white);
+      }
+
+      .cta-box h2 {
+        margin: 0;
+        font-size: 40px;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: -1.2px;
+      }
+
+      .cta-box p {
+        margin: 10px 0 0;
+        color: #dedbd6;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      .cta-box .button {
+        border-color: var(--white);
+        color: var(--off-black);
+        background: var(--white);
+        flex: 0 0 auto;
+      }
+
+      footer {
+        border-top: 1px solid var(--oat);
+        background: var(--white);
+      }
+
+      .footer-inner {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 24px;
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 896px) {
+        .content,
+        .issue-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .side-card {
+          position: static;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .nav,
+        .footer-inner,
+        .cta-box {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav-links {
+          flex-wrap: wrap;
+        }
+
+        .hero {
+          padding-top: 42px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nav" aria-label="Primary navigation">
+      <a class="brand" href="/healthcare-testimony/">
+        <span class="mark">HT</span>
+        <span>Healthcare Testimony</span>
+      </a>
+      <nav class="nav-links" aria-label="Site links">
+        <a href="/healthcare-testimony/">Home</a>
+        <a class="button secondary" href="https://healthcare-testimony.onrender.com/healthcare-testimony">Open tool</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="mono">About the product</p>
+        <h1>A public-record alignment engine for healthcare hearings<span class="orange">.</span></h1>
+        <p class="lede">
+          The tool helps policy and communications teams prepare healthcare CEOs for Senate testimony
+          without inventing senator positions, overstating alignment, or hiding evidence gaps.
+        </p>
+      </section>
+
+      <section class="content">
+        <aside class="side-card">
+          <h2>Use it when the stakes are public.</h2>
+          <p>
+            The workflow is designed for political strategists, public affairs teams, congressional
+            affairs staff, and CEO communications advisors.
+          </p>
+          <a class="button primary" href="https://healthcare-testimony.onrender.com/healthcare-testimony">Launch the tool</a>
+        </aside>
+
+        <div class="stack">
+          <article class="section-card">
+            <p class="mono">What it does</p>
+            <h2>It turns testimony into committee prep.</h2>
+            <p>
+              Users enter a hearing title, committee, healthcare topic, company type, CEO name,
+              organization, and draft testimony. The application extracts claims, maps them to
+              healthcare issue tags, retrieves evidence fixtures or configured public sources, scores
+              alignment, and generates red-team questions and safer rewrites.
+            </p>
+          </article>
+
+          <article class="section-card">
+            <p class="mono">Committee coverage</p>
+            <h2>Built beyond Appropriations.</h2>
+            <div class="issue-grid">
+              <div class="issue">Senate Finance</div>
+              <div class="issue">Senate HELP</div>
+              <div class="issue">Appropriations Labor-HHS</div>
+              <div class="issue">Special Committee on Aging</div>
+              <div class="issue">Senate Judiciary</div>
+              <div class="issue">Homeland Security and Governmental Affairs</div>
+            </div>
+          </article>
+
+          <article class="section-card">
+            <p class="mono">Evidence discipline</p>
+            <h2>Every senator-specific claim needs a source.</h2>
+            <ul>
+              <li>Direct evidence is separated from reasonable inference.</li>
+              <li>Thin evidence is labeled instead of filled in with speculation.</li>
+              <li>Recommendations are marked as strategic communications guidance, not facts.</li>
+              <li>Unsupported LLM-style senator claims are blocked by citation auditing.</li>
+            </ul>
+          </article>
+
+          <article class="section-card">
+            <p class="mono">Healthcare topics</p>
+            <h2>Configured for issues senators actually press.</h2>
+            <p>
+              The taxonomy includes Medicare Advantage, prior authorization, AI in healthcare,
+              drug pricing, PBMs, hospital consolidation, cybersecurity, NIH funding, rural health,
+              long-term care, patient access, safety, quality, reimbursement, privacy, fraud,
+              billing transparency, and price transparency.
+            </p>
+          </article>
+
+          <article class="section-card">
+            <p class="mono">Guardrails</p>
+            <h2>Designed to avoid misleading testimony.</h2>
+            <div class="warning">
+              The tool does not infer private beliefs, fabricate quotes, promise future votes,
+              imply senator support without evidence, recommend deception, or provide legal
+              lobbying compliance advice.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="cta-box">
+          <div>
+            <h2>Open the working tool.</h2>
+            <p>Run the AI prior authorization demo or paste new testimony for committee analysis.</p>
+          </div>
+          <a class="button" href="https://healthcare-testimony.onrender.com/healthcare-testimony">Open Render app</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <span>Healthcare CEO Senate Testimony Alignment Tool</span>
+        <span>Standalone healthcare-focused tool.</span>
+      </div>
+    </footer>
+  </body>
+</html>
