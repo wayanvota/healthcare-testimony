@@ -132,6 +132,10 @@ The production schema is in `schema/schema.sql`.
 
 It includes `CREATE EXTENSION IF NOT EXISTS vector;` and tables for senators, committees, memberships, subcommittees, healthcare issue taxonomy, sources, evidence items, testimony documents, extracted claims, claim alignment results, generated questions, generated reports, topic embeddings, analysis runs, and senator analysis jobs.
 
+When `DATABASE_URL` is set, the app connects to Postgres with `pg`, ensures the schema exists, and persists completed `/api/analyze` and `/api/jobs` results into the production tables. Without `DATABASE_URL`, the app stays in deterministic `local_memory` mode.
+
+For Neon, use a direct connection string when manually running `schema/schema.sql` in the SQL Editor or migration tooling. Use the pooled Neon connection string for normal Render app traffic.
+
 ## Local Development
 
 Local mode is deterministic and extractive:
@@ -231,6 +235,7 @@ Avoided language:
 - PDF export is intentionally dependency-light and optimized for simple report output.
 - Public source retrieval adapters are stubs until API credentials and production ingestion scheduling are configured.
 - The deterministic scorer is conservative and labels thin evidence rather than filling gaps.
+- Live public-source ingestion adapters are still placeholders; persisted records currently come from deterministic analysis, fixtures, and submitted testimony.
 
 ## Future Enhancements
 

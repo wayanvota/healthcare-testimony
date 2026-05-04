@@ -31,7 +31,7 @@ test("app runs locally without API keys and respects BASE_PATH", async () => {
 
 test("project is standalone with no Appropriations testimony dependency", async () => {
   const pkg = await import("../package.json", { with: { type: "json" } });
-  assert.equal(pkg.default.dependencies && Object.keys(pkg.default.dependencies).length, 0);
+  assert.equal(Boolean(pkg.default.dependencies?.pg), true);
   const analysis = runAnalysis(DEMO_INPUT);
   assert.equal(Boolean(analysis.markdown.includes("does not depend on the Senate Appropriations testimony tool")), true);
 });

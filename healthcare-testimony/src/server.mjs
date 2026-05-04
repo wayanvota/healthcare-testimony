@@ -13,7 +13,7 @@ import { rewriteTestimony } from "./lib/rewriteEngine.mjs";
 import { getRoster } from "./lib/roster.mjs";
 import { listCommittees } from "./lib/committees.mjs";
 import { ingestCongress, ingestGovInfo } from "./lib/ingestion.mjs";
-import { dbMode } from "./lib/db.mjs";
+import { dbMode, getStoredJob, persistAnalysis } from "./lib/db.mjs";
 import { startScheduler } from "./lib/scheduler.mjs";
 import { DEMO_INPUT } from "./lib/fixtures.mjs";
 import { envConfig, jsonResponse, nowIso, readJsonBody, stableId } from "./lib/utils.mjs";
@@ -62,7 +62,11 @@ async function routeApi(req, res, path, url) {
   }
   if (req.method === "GET") {
     const jobMatch = path.match(/^\/api\/jobs\/([^/]+)$/);
-    if (jobMatch) return jsonResponse(res, jobs.has(jobMatch[1]) ? 200 : 404, jobs.get(jobMatch[1]) || { error: "Job not found." });
+    if (jobMatch) {
+      if (jobs.has(jobMatch[1])) return jsonResponse(res, 200, jobs.get(jobMatch[1]));
+      const stored = await getStoredJob(config, jobMatch[1]);
+      return jsonResponse(res, stored ? 200 : 404, stored || { error: "Job not found." });
+    }
   }
 
   if (req.method !== "POST") return notFound(res);
@@ -70,6 +74,7 @@ async function routeApi(req, res, path, url) {
 
   if (path === "/api/analyze") {
     lastAnalysis = runAnalysis(body);
+    lastAnalysis.persistence = await safePersist(lastAnalysis);
     return jsonResponse(res, 200, lastAnalysis);
   }
   if (path === "/api/extract-claims") return jsonResponse(res, 200, extractClaims(body));
@@ -97,10 +102,12 @@ async function routeApi(req, res, path, url) {
   if (path === "/api/ingest/congress") return jsonResponse(res, 200, await ingestCongress(body));
   if (path === "/api/ingest/govinfo") return jsonResponse(res, 200, await ingestGovInfo(body));
   if (path === "/api/jobs") {
-    const id = stableId("job", `${Date.now()}:${JSON.stringify(body)}`);
-    const job = { id, status: "completed", createdAt: nowIso(), completedAt: nowIso(), result: runAnalysis(body.input || body || DEMO_INPUT) };
+    const analysis = runAnalysis(body.input || body || DEMO_INPUT);
+    analysis.persistence = await safePersist(analysis);
+    const id = analysis.id || stableId("job", `${Date.now()}:${JSON.stringify(body)}`);
+    const job = { id, status: "completed", createdAt: nowIso(), completedAt: nowIso(), result: analysis };
     jobs.set(id, job);
-    lastAnalysis = job.result;
+    lastAnalysis = analysis;
     return jsonResponse(res, 200, job);
   }
   return notFound(res);
@@ -155,7 +162,19 @@ function notFound(res) {
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
-  createAppServer().listen(config.port, () => {
+  createAppServer().listen(config.port, "0.0.0.0", () => {
     console.log(`Healthcare CEO Senate Testimony Alignment Tool running at http://localhost:${config.port}${config.basePath}`);
   });
+}
+
+async function safePersist(analysis) {
+  try {
+    return await persistAnalysis(config, analysis);
+  } catch (error) {
+    return {
+      persisted: false,
+      error: error.message,
+      warning: "Analysis completed but database persistence failed."
+    };
+  }
 }
