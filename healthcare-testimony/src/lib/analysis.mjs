@@ -9,6 +9,7 @@ import { scoreAlignment } from "./alignmentScoring.mjs";
 import { generateQuestions } from "./questionGenerator.mjs";
 import { rewriteTestimony } from "./rewriteEngine.mjs";
 import { auditCitations } from "./citationAuditor.mjs";
+import { enhanceAnalysisWithLlm } from "./openaiClient.mjs";
 import { buildMarkdownReport } from "./reportBuilder.mjs";
 import { stableId, unique } from "./utils.mjs";
 
@@ -58,6 +59,11 @@ export function runAnalysis(input = {}) {
   };
   analysis.markdown = buildMarkdownReport(analysis, "ceo_briefing_memo");
   return analysis;
+}
+
+export async function runAnalysisDynamic(input = {}, config = {}) {
+  const deterministic = runAnalysis(input);
+  return enhanceAnalysisWithLlm(config, deterministic);
 }
 
 function buildExecutiveSummary({ claims, matrix, alignmentResults, committees, rewrites }) {

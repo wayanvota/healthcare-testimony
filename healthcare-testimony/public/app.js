@@ -52,7 +52,7 @@ function bindEvents() {
 async function checkHealth() {
   try {
     const health = await apiGet("/health");
-    els.health.textContent = health.ok ? "Local deterministic mode" : "Unavailable";
+    els.health.textContent = health.ok ? (health.llmEnabled ? `OpenAI synthesis: ${health.llmModel}` : "Local deterministic mode") : "Unavailable";
     els.health.classList.toggle("ok", Boolean(health.ok));
   } catch {
     els.health.textContent = "Unavailable";

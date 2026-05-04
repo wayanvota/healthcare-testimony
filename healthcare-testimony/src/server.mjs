@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runAnalysis } from "./lib/analysis.mjs";
+import { runAnalysis, runAnalysisDynamic } from "./lib/analysis.mjs";
 import { buildMarkdownReport } from "./lib/reportBuilder.mjs";
 import { markdownToPdfBuffer } from "./lib/pdfExport.mjs";
 import { extractClaims } from "./lib/claimExtractor.mjs";
@@ -53,6 +53,7 @@ async function routeApi(req, res, path, url) {
       basePath: config.basePath,
       dbMode: dbMode(config),
       llmEnabled: config.useLlm && Boolean(config.openaiApiKey),
+      llmModel: config.useLlm && config.openaiApiKey ? config.openaiModel : null,
       time: nowIso()
     });
   }
@@ -73,7 +74,7 @@ async function routeApi(req, res, path, url) {
   const body = await readJsonBody(req);
 
   if (path === "/api/analyze") {
-    lastAnalysis = runAnalysis(body);
+    lastAnalysis = await runAnalysisDynamic(body, config);
     lastAnalysis.persistence = await safePersist(lastAnalysis);
     return jsonResponse(res, 200, lastAnalysis);
   }
@@ -102,7 +103,7 @@ async function routeApi(req, res, path, url) {
   if (path === "/api/ingest/congress") return jsonResponse(res, 200, await ingestCongress(body));
   if (path === "/api/ingest/govinfo") return jsonResponse(res, 200, await ingestGovInfo(body));
   if (path === "/api/jobs") {
-    const analysis = runAnalysis(body.input || body || DEMO_INPUT);
+    const analysis = await runAnalysisDynamic(body.input || body || DEMO_INPUT, config);
     analysis.persistence = await safePersist(analysis);
     const id = analysis.id || stableId("job", `${Date.now()}:${JSON.stringify(body)}`);
     const job = { id, status: "completed", createdAt: nowIso(), completedAt: nowIso(), result: analysis };

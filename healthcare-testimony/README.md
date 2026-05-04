@@ -23,7 +23,7 @@ It has a separate project directory, app name, routing base path, database schem
 - Node.js 20+ plain HTTP server
 - Browser dashboard at `/healthcare-testimony`
 - Deterministic local analysis by default
-- Optional future OpenAI integration behind environment variables
+- Optional OpenAI synthesis behind environment variables
 - PostgreSQL production schema with pgvector support
 - Local fixture evidence for tests and no-key development
 - Markdown and PDF export endpoints
@@ -144,6 +144,30 @@ Local mode is deterministic and extractive:
 - Evidence retrieval uses fixture evidence with official/reputable reliability labels.
 - Alignment scoring does not claim senator support unless cited evidence exists.
 - LLM output is disabled unless `USE_LLM=true` and `OPENAI_API_KEY` is set.
+
+## OpenAI Synthesis Mode
+
+When `USE_LLM=true` and `OPENAI_API_KEY` is configured, `/api/analyze` first runs the deterministic pipeline, then sends only the extracted claims, selected senators, alignment results, and retrieved evidence IDs to OpenAI's Responses API. The model must return strict structured JSON for senator questions, answer frames, card updates, and rewrites.
+
+OpenAI output is accepted only when citation validation passes:
+
+- every senator-specific item must cite known `evidence_items` IDs
+- cited evidence IDs must exist in the retrieved evidence set
+- senator-specific question/card citations must belong to that senator
+- rewrites must be labeled as safer strategic recommendations
+- final citation audit must pass before the app replaces deterministic questions or rewrites
+
+If validation fails or the OpenAI request errors, the app keeps deterministic output and returns an `llm.blocked` warning in the JSON response.
+
+Render environment variables for OpenAI mode:
+
+```bash
+USE_LLM=true
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-5.4-mini
+```
+
+If your OpenAI account does not have access to `gpt-5.4-mini`, use a model available to your account that supports structured outputs.
 
 ## Production Deployment
 
