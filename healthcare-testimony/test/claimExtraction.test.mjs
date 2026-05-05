@@ -16,3 +16,20 @@ test("claim extraction identifies high-risk AI and prior authorization claims", 
   assert.ok(claim.sourceSpan.start >= 0);
   assert.ok(claim.sourceSpan.end > claim.sourceSpan.start);
 });
+
+test("claim extraction flags overbroad automation and guarantee language", () => {
+  const { claims } = extractClaims({
+    healthcareTopic: "AI prior authorization Medicare Advantage",
+    testimonyText: "Our proprietary AI platform fully automates prior authorization decisions and eliminates unnecessary care delays. The algorithm never denies medically necessary care, guarantees faster access for every patient, and creates major cost savings for Medicare Advantage plans without affecting patient outcomes."
+  });
+  const riskTerms = claims.flatMap((claim) => claim.riskTerms);
+  assert.ok(claims.every((claim) => claim.riskLevel === "high"));
+  assert.ok(riskTerms.includes("proprietary ai platform"));
+  assert.ok(riskTerms.includes("fully automates"));
+  assert.ok(riskTerms.includes("eliminates unnecessary care delays"));
+  assert.ok(riskTerms.includes("never denies medically necessary care"));
+  assert.ok(riskTerms.includes("guarantees faster access"));
+  assert.ok(riskTerms.includes("every patient"));
+  assert.ok(riskTerms.includes("major cost savings"));
+  assert.ok(riskTerms.includes("without affecting patient outcomes"));
+});

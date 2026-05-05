@@ -32,7 +32,15 @@ export function retrieveEvidence({ senators = [], issueTags = [], topic = "", co
         ...item,
         source,
         rankScore,
-        citations: source ? [{ sourceId: source.id, title: source.title, url: source.url, publisher: source.publisher, reliability: source.reliability }] : []
+        citations: source ? [{
+          sourceId: source.id,
+          title: source.title,
+          url: source.url,
+          publisher: source.publisher,
+          reliability: source.reliability,
+          sourceType: source.sourceType,
+          evidenceType: item.itemType
+        }] : []
       };
     })
     .filter((item) => item.rankScore > 0 || !wantedTags.size)

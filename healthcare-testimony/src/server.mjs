@@ -13,7 +13,7 @@ import { rewriteTestimony } from "./lib/rewriteEngine.mjs";
 import { getRoster } from "./lib/roster.mjs";
 import { listCommittees } from "./lib/committees.mjs";
 import { ingestCongress, ingestGovInfo } from "./lib/ingestion.mjs";
-import { dbMode, getStoredJob, persistAnalysis } from "./lib/db.mjs";
+import { dbMode, getStoredJob, listStoredRuns, persistAnalysis } from "./lib/db.mjs";
 import { startScheduler } from "./lib/scheduler.mjs";
 import { DEMO_INPUT } from "./lib/fixtures.mjs";
 import { envConfig, jsonResponse, nowIso, readJsonBody, stableId } from "./lib/utils.mjs";
@@ -58,6 +58,13 @@ async function routeApi(req, res, path, url) {
     });
   }
   if (req.method === "GET" && path === "/api/committees") return jsonResponse(res, 200, { committees: listCommittees() });
+  if (req.method === "GET" && path === "/api/history") {
+    const limit = Number(url.searchParams.get("limit") || 10);
+    return jsonResponse(res, 200, {
+      mode: dbMode(config),
+      runs: await listStoredRuns(config, limit)
+    });
+  }
   if (req.method === "GET" && path === "/api/roster") {
     return jsonResponse(res, 200, getRoster({ committeeCode: url.searchParams.get("committee"), includeSenators: url.searchParams.get("include"), excludeSenators: url.searchParams.get("exclude") }));
   }

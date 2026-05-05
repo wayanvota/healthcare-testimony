@@ -40,12 +40,18 @@ function ceoMemoMarkdown(analysis) {
     ]),
     "",
     "## Recommended testimony edits",
-    ...analysis.rewrites.map((rewrite) => `- Original: ${rewrite.originalText}\n  Suggested: ${rewrite.suggestedRewrite}\n  Citations: ${citationLinks(rewrite.citations)}`),
+    ...analysis.rewrites.map((rewrite) => `- Original: ${rewrite.originalText}\n  Suggested: ${rewrite.suggestedRewrite}\n  Output label: Strategic rewrite recommendation, not a senator factual claim.\n  Citations: ${citationLinks(rewrite.citations)}`),
+    "",
+    "## CEO data readiness",
+    analysis.dataReadiness?.summary || "No specialized data-readiness prompts were triggered.",
+    ...(analysis.dataReadiness?.items || []).map((item) => `- ${item}`),
+    analysis.dataReadiness?.caveat || "",
     "",
     "## Red-team Q&A",
-    ...analysis.questions.map((question) => `- **${question.senatorName}**: ${question.likelyQuestion}\n  Answer frame: ${question.answerFrame.join(" ")}\n  Citation: ${citationLinks(question.citations)}`),
+    ...analysis.questions.map((question) => `- **${question.senatorName}**: ${question.likelyQuestion}\n  Output label: Strategic question grounded in cited evidence, not a prediction of future senator conduct.\n  Answer frame: ${question.answerFrame.join(" ")}\n  Citation: ${citationLinks(question.citations)}`),
     "",
     "## Evidence confidence and caveats",
+    `OpenAI synthesis status: ${llmStatus(analysis)}.`,
     ...analysis.audit.warnings.map((warning) => `- ${warning}`),
     "Every senator-specific factual claim should be read as based on public record and subject to source limits.",
     "",
@@ -91,7 +97,10 @@ function rewriteMemoMarkdown(analysis) {
 
 function citationLinks(citations = []) {
   if (!citations.length) return "[missing citation]";
-  return citations.map((citation) => `[${citation.title}](${citation.url})`).join("; ");
+  return citations.map((citation) => {
+    const label = [citation.reliability, citation.sourceType || citation.evidenceType].filter(Boolean).join(", ");
+    return `[${citation.title}](${citation.url})${label ? ` (${label})` : ""}`;
+  }).join("; ");
 }
 
 function sourceList(analysis) {
@@ -108,4 +117,11 @@ function sourceList(analysis) {
     return listCommittees().map((committee) => `- [${committee.name}](${committee.officialUrl})`);
   }
   return rows;
+}
+
+function llmStatus(analysis) {
+  if (!analysis.llm) return "deterministic local analysis";
+  if (analysis.llm.used) return `used citation-gated synthesis with ${analysis.llm.model || "configured model"}`;
+  if (analysis.llm.blocked) return `blocked and fell back to deterministic output (${analysis.llm.reason || "citation audit failed"})`;
+  return analysis.llm.reason || "disabled or unavailable";
 }

@@ -11,6 +11,7 @@ import { rewriteTestimony } from "./rewriteEngine.mjs";
 import { auditCitations } from "./citationAuditor.mjs";
 import { enhanceAnalysisWithLlm } from "./openaiClient.mjs";
 import { buildMarkdownReport } from "./reportBuilder.mjs";
+import { buildDataReadiness } from "./dataReadiness.mjs";
 import { stableId, unique } from "./utils.mjs";
 
 export function runAnalysis(input = {}) {
@@ -30,6 +31,7 @@ export function runAnalysis(input = {}) {
   const scored = scoreAlignment({ claims, senators, evidence: retrieval.evidence, committeeCodes, topic: parsed.healthcareTopic });
   const questionResult = generateQuestions({ claims, senators, alignmentResults: scored.results, evidence: retrieval.evidence });
   const rewriteResult = rewriteTestimony({ claims, alignmentResults: scored.results, evidence: retrieval.evidence });
+  const dataReadiness = buildDataReadiness({ claims, issueTags: allClaimTags });
   const audit = auditCitations({
     alignmentResults: scored.results,
     questions: questionResult.questions,
@@ -53,6 +55,7 @@ export function runAnalysis(input = {}) {
     matrix: scored.matrix,
     questions: questionResult.questions,
     rewrites: rewriteResult.rewrites,
+    dataReadiness,
     senatorCards,
     audit,
     executiveSummary: buildExecutiveSummary({ claims, matrix: scored.matrix, alignmentResults: scored.results, committees, rewrites: rewriteResult.rewrites })

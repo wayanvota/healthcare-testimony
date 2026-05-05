@@ -55,7 +55,6 @@ export async function enhanceAnalysisWithLlm(config, analysis) {
         ? "OpenAI synthesis passed citation audit, but some evidence remains thin. Avoid overstating senator alignment."
         : "OpenAI synthesis passed citation audit."
     };
-    enhanced.markdown = buildMarkdownReport(enhanced, "ceo_briefing_memo");
     return annotateLlm(enhanced, {
       enabled: true,
       used: true,
@@ -429,9 +428,13 @@ function applyEnhancement(analysis, enhancement) {
 }
 
 function annotateLlm(analysis, llm) {
-  return {
+  const annotated = {
     ...analysis,
     llm
+  };
+  return {
+    ...annotated,
+    markdown: buildMarkdownReport(annotated, "ceo_briefing_memo")
   };
 }
 

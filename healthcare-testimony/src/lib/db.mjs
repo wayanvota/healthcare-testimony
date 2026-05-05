@@ -211,6 +211,7 @@ export async function persistAnalysis(config, analysis) {
     JSON.stringify({
       executiveSummary: analysis.executiveSummary,
       matrix: analysis.matrix,
+      dataReadiness: analysis.dataReadiness,
       audit: analysis.audit
     }),
     analysis.markdown || ""
@@ -253,6 +254,19 @@ export async function getStoredJob(config, jobId) {
   await ensureSchema(config);
   const result = await query(config, "SELECT * FROM analysis_runs WHERE id = $1", [jobId]);
   return result?.rows?.[0] || null;
+}
+
+export async function listStoredRuns(config, limit = 10) {
+  if (!config?.databaseUrl) return [];
+  await ensureSchema(config);
+  const result = await query(config, `
+    SELECT id, hearing_title, topic, committee_codes, status, total_jobs,
+      completed_jobs, failed_jobs, created_at, updated_at, completed_at
+    FROM analysis_runs
+    ORDER BY created_at DESC
+    LIMIT $1
+  `, [Math.max(1, Math.min(50, Number(limit) || 10))]);
+  return result?.rows || [];
 }
 
 export async function closeDb() {

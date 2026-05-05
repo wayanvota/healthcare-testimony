@@ -24,8 +24,12 @@ const els = {
   senatorCards: document.querySelector("#senatorCards"),
   questionCount: document.querySelector("#questionCount"),
   questions: document.querySelector("#questions"),
+  dataCount: document.querySelector("#dataCount"),
+  dataReadiness: document.querySelector("#dataReadiness"),
   rewriteCount: document.querySelector("#rewriteCount"),
   rewrites: document.querySelector("#rewrites"),
+  historyCount: document.querySelector("#historyCount"),
+  historyList: document.querySelector("#historyList"),
   pathLabel: document.querySelector("#pathLabel")
 };
 
@@ -43,10 +47,16 @@ function bindEvents() {
     fillForm(demoInput);
     runAnalysis(demoInput);
   });
+  document.querySelector("#historyButton").addEventListener("click", loadHistory);
   document.querySelector("#refreshButton").addEventListener("click", refreshRosters);
   document.querySelector("#selectedButton").addEventListener("click", () => runAnalysis({ ...collectForm(), selectedOnly: true }));
   document.querySelector("#markdownButton").addEventListener("click", exportMarkdown);
   document.querySelector("#pdfButton").addEventListener("click", exportPdf);
+  els.matrixBody.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-senator]");
+    if (!button) return;
+    document.querySelector(`#card-${CSS.escape(button.dataset.senator)}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 async function checkHealth() {
@@ -71,6 +81,8 @@ async function runAnalysis(payload) {
   try {
     currentAnalysis = await apiPost("/analyze", payload);
     renderAnalysis(currentAnalysis);
+    els.health.textContent = currentAnalysis.llm?.used ? "Analysis complete with OpenAI synthesis" : "Analysis complete";
+    els.health.classList.add("ok");
   } catch (error) {
     renderError(error);
   } finally {
@@ -84,6 +96,7 @@ function renderAnalysis(analysis) {
   renderClaims(analysis.claims || [], analysis.alignmentResults || []);
   renderSenatorCards(analysis.senatorCards || []);
   renderQuestions(analysis.questions || []);
+  renderDataReadiness(analysis.dataReadiness);
   renderRewrites(analysis.rewrites || []);
 }
 
@@ -95,6 +108,7 @@ function renderExecutiveDashboard(analysis) {
     ["Risky claims", summary.riskyClaims ?? 0, "Claims needing tighter answer frames."],
     ["Highest-risk senators", summary.highestRiskSenators?.length ?? 0, (summary.highestRiskSenators || []).map((row) => row.senator).join(", ") || "None flagged"],
     ["Strong jurisdiction", (summary.strongestJurisdictionCommittees || []).join(", ") || "Auto-detect", "Committees selected from issue tags."],
+    ["OpenAI status", llmStatusValue(analysis), llmStatusDetail(analysis)],
     ["Top edit", summary.topRecommendedEdits?.[0] ? "Ready" : "None", summary.topRecommendedEdits?.[0] || "No high-risk rewrite generated."]
   ];
   els.dashboard.innerHTML = cards.map(([label, value, detail]) => `
@@ -119,7 +133,7 @@ function renderMatrix(rows) {
       <td>${riskPill(row.riskLevel)}</td>
       <td>${escapeHtml(row.evidenceStrength)}</td>
       <td>${escapeHtml(row.likelyConcern)}</td>
-      <td>${row.topCitedSource ? `<a class="source-link" href="${escapeAttr(row.topCitedSource.url)}" target="_blank" rel="noreferrer">${escapeHtml(row.topCitedSource.title)}</a>` : "Missing"}</td>
+      <td>${row.topCitedSource ? `<a class="source-link" href="${escapeAttr(row.topCitedSource.url)}" target="_blank" rel="noreferrer">${escapeHtml(row.topCitedSource.title)}</a><span class="citation-meta">${escapeHtml(row.topCitedSource.reliability || "source")}</span>` : "Missing"}</td>
       <td><button class="ghost" type="button" data-senator="${escapeAttr(row.senatorId)}">Open</button></td>
     </tr>
   `).join("");
@@ -142,6 +156,7 @@ function renderClaims(claims, alignmentResults) {
         <p>Senators aligned: ${escapeHtml(aligned.slice(0, 5).join(", ") || "None identified")}</p>
         <p>Senators in tension: ${escapeHtml(tension.slice(0, 5).join(", ") || "None identified")}</p>
         <p>Risk explanation: ${escapeHtml(firstRisk?.riskSummary || "Evidence is thin.")}</p>
+        <p>Evidence label: ${escapeHtml(firstRisk?.thinEvidenceWarning ? "Thin evidence warning" : "Direct public-record evidence or cited fixture evidence")}</p>
       </div>
     `;
   }).join("");
@@ -156,10 +171,12 @@ function renderSenatorCards(cards) {
       <p>${escapeHtml(card.committeeRole)}</p>
       <p>Priorities: ${card.healthcareIssuePriorities.map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`).join("")}</p>
       <p>${escapeHtml(card.alignmentWithCeoTestimony)}</p>
+      <p>Evidence basis: ${escapeHtml(card.evidenceSummary)}</p>
       <ul>${(card.likelyQuestions || []).slice(0, 3).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       <p>Use: ${escapeHtml((card.phrasesToUse || []).join("; "))}</p>
       <p>Avoid: ${escapeHtml((card.phrasesToAvoid || []).join("; "))}</p>
       <p>Confidence: ${escapeHtml(card.confidenceLevel)}</p>
+      <p>${citationLinks(card.citations)}</p>
     </div>
   `).join("");
 }
@@ -175,9 +192,23 @@ function renderQuestions(questions) {
       <p>Why it matters: ${escapeHtml(question.whyItMatters)}</p>
       <ul>${(question.answerFrame || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       <p>Bad answer to avoid: ${escapeHtml(question.badAnswerToAvoid)}</p>
+      <p>Output label: Strategic question grounded in cited evidence, not a prediction of future senator conduct.</p>
       <p>${citationLinks(question.citations)}</p>
     </div>
   `).join("");
+}
+
+function renderDataReadiness(dataReadiness) {
+  const items = dataReadiness?.items || [];
+  els.dataCount.textContent = `${items.length} items`;
+  if (!items.length) return renderEmpty(els.dataReadiness);
+  els.dataReadiness.innerHTML = `
+    <div class="item-card">
+      <p class="claim-text">${escapeHtml(dataReadiness.summary)}</p>
+      <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      <p>${escapeHtml(dataReadiness.caveat || "")}</p>
+    </div>
+  `;
 }
 
 function renderRewrites(rewrites) {
@@ -189,9 +220,33 @@ function renderRewrites(rewrites) {
       <p>Risk: ${escapeHtml(rewrite.riskExplanation)}</p>
       <p class="rewrite-text">Suggested: ${escapeHtml(rewrite.suggestedRewrite)}</p>
       <p>${escapeHtml(rewrite.whySafer)}</p>
+      <p>Output label: Strategic rewrite recommendation, not a senator factual claim.</p>
       <p>${citationLinks(rewrite.citations)}</p>
     </div>
   `).join("");
+}
+
+async function loadHistory() {
+  try {
+    const history = await apiGet("/history?limit=10");
+    const runs = history.runs || [];
+    els.historyCount.textContent = `${runs.length} runs`;
+    if (!runs.length) {
+      els.historyList.innerHTML = `<div class="empty-state">${history.mode === "local_memory" ? "Neon is not configured for this environment." : "No saved analyses yet."}</div>`;
+      return;
+    }
+    els.historyList.innerHTML = runs.map((run) => `
+      <div class="item-card">
+        <p class="claim-text">${escapeHtml(run.hearing_title || run.id)}</p>
+        <p>Topic: ${escapeHtml(run.topic || "Not specified")}</p>
+        <p>Status: ${escapeHtml(run.status)}. Senators: ${escapeHtml(run.completed_jobs ?? 0)} / ${escapeHtml(run.total_jobs ?? 0)}.</p>
+        <p>Created: ${escapeHtml(formatDate(run.created_at))}</p>
+      </div>
+    `).join("");
+  } catch (error) {
+    els.historyCount.textContent = "Unavailable";
+    els.historyList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+  }
 }
 
 async function exportMarkdown() {
@@ -260,7 +315,8 @@ function detectBasePath() {
 
 function setBusy(isBusy) {
   document.querySelector("#analyzeButton").disabled = isBusy;
-  if (isBusy) els.health.textContent = "Analyzing";
+  document.querySelector("#selectedButton").disabled = isBusy;
+  if (isBusy) els.health.textContent = "Running citation-gated analysis; OpenAI may take 20-40 seconds";
 }
 
 function renderError(error) {
@@ -277,7 +333,32 @@ function riskPill(level) {
 
 function citationLinks(citations = []) {
   if (!citations.length) return "Citation: missing";
-  return citations.slice(0, 2).map((citation) => `<a href="${escapeAttr(citation.url)}" target="_blank" rel="noreferrer">${escapeHtml(citation.title)}</a>`).join("; ");
+  return citations.slice(0, 3).map((citation) => {
+    const label = [citation.reliability, citation.sourceType || citation.evidenceType].filter(Boolean).join(" · ");
+    return `<a href="${escapeAttr(citation.url)}" target="_blank" rel="noreferrer">${escapeHtml(citation.title)}</a><span class="citation-meta">${escapeHtml(label || "source")}</span>`;
+  }).join("; ");
+}
+
+function llmStatusValue(analysis) {
+  if (!analysis.llm) return "Deterministic";
+  if (analysis.llm.used) return "Used";
+  if (analysis.llm.blocked) return "Blocked";
+  return analysis.llm.enabled ? "Fallback" : "Off";
+}
+
+function llmStatusDetail(analysis) {
+  if (!analysis.llm) return "Local deterministic analysis only.";
+  if (analysis.llm.used) return `Citation-gated synthesis passed audit with ${analysis.llm.model || "configured model"}.`;
+  if (analysis.llm.blocked) return `OpenAI output blocked: ${analysis.llm.reason || "citation audit failed"}.`;
+  if (analysis.llm.reason) return analysis.llm.reason;
+  return "OpenAI is disabled or unavailable.";
+}
+
+function formatDate(value) {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
 }
 
 function downloadBlob(blob, filename) {

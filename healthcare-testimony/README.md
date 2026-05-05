@@ -110,6 +110,7 @@ The taxonomy lives in `src/lib/healthcareTaxonomy.mjs` and includes Medicare, Me
 - `GET /api/health`
 - `GET /api/committees`
 - `GET /api/roster?committee=finance&refresh=1`
+- `GET /api/history?limit=10`
 - `POST /api/analyze`
 - `POST /api/extract-claims`
 - `POST /api/retrieve-evidence`
@@ -125,6 +126,14 @@ The taxonomy lives in `src/lib/healthcareTaxonomy.mjs` and includes Medicare, Me
 - `POST /api/jobs`
 
 When deployed with `BASE_PATH=/healthcare-testimony`, these are served below `/healthcare-testimony/api/*`.
+
+For the current public deployment, `wayan.com/healthcare-testimony/` is a static landing/about site. It does not proxy API traffic. Live QA and API checks should call the Render service explicitly:
+
+```text
+Static pages: https://wayan.com/healthcare-testimony/
+Interactive app: https://healthcare-testimony.onrender.com/healthcare-testimony
+API base: https://healthcare-testimony.onrender.com/healthcare-testimony/api
+```
 
 ## Database Setup
 
@@ -171,7 +180,7 @@ If your OpenAI account does not have access to `gpt-5.4-mini`, use a model avail
 
 ## Production Deployment
 
-The app is designed for:
+The Node app is designed for:
 
 ```text
 https://wayan.com/healthcare-testimony
@@ -196,6 +205,13 @@ location /healthcare-testimony/ {
 }
 ```
 
+Current public setup:
+
+- `https://wayan.com/healthcare-testimony/` serves static `index.html` and `about.html`.
+- The static pages link to the Render-hosted app at `https://healthcare-testimony.onrender.com/healthcare-testimony`.
+- The functioning API lives on Render at `https://healthcare-testimony.onrender.com/healthcare-testimony/api/*`.
+- Do not test `https://wayan.com/healthcare-testimony/api/*` unless a reverse proxy is later configured on `wayan.com`.
+
 ## Testing Plan
 
 Run:
@@ -205,6 +221,22 @@ npm test
 ```
 
 Tests verify taxonomy mappings, high-risk AI/prior authorization extraction, negative alignment scoring against cited evidence, thin-evidence warnings, citation auditing, red-team evidence grounding, Markdown citations, local no-key startup, `BASE_PATH=/healthcare-testimony`, and standalone independence.
+
+Optional live QA against the public deployment:
+
+```bash
+npm run test:live
+```
+
+The live Playwright test uses these defaults:
+
+```text
+HEALTHCARE_TESTIMONY_STATIC_URL=https://wayan.com/healthcare-testimony/
+HEALTHCARE_TESTIMONY_APP_URL=https://healthcare-testimony.onrender.com/healthcare-testimony
+HEALTHCARE_TESTIMONY_API_BASE=https://healthcare-testimony.onrender.com/healthcare-testimony/api
+```
+
+This is intentional: the public static pages are hosted at `wayan.com`, while the working service and API are hosted on Render.
 
 ## Demo Scenario
 
@@ -256,6 +288,7 @@ Avoided language:
 ## Known Limitations
 
 - Local mode uses fixtures rather than live Senate, Congress.gov, or GovInfo retrieval.
+- Demo fixture citations are public-source oriented and labeled, but they are not a substitute for a hearing-specific source review before real CEO testimony.
 - PDF export is intentionally dependency-light and optimized for simple report output.
 - Public source retrieval adapters are stubs until API credentials and production ingestion scheduling are configured.
 - The deterministic scorer is conservative and labels thin evidence rather than filling gaps.

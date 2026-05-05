@@ -25,6 +25,9 @@ test("app runs locally without API keys and respects BASE_PATH", async () => {
   const health = JSON.parse((await mockGet(server, "/healthcare-testimony/api/health")).body);
   assert.equal(health.ok, true);
   assert.equal(health.basePath, "/healthcare-testimony");
+  const history = JSON.parse((await mockGet(server, "/healthcare-testimony/api/history?limit=5")).body);
+  assert.equal(history.mode, "local_memory");
+  assert.deepEqual(history.runs, []);
   const home = (await mockGet(server, "/healthcare-testimony")).body;
   assert.match(home, /Healthcare CEO Senate Testimony Alignment Tool/);
 });

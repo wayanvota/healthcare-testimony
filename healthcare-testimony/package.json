@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.mjs",
     "worker": "node src/worker.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "test:live": "playwright test test/live/healthcare-testimony-live.spec.ts"
   },
   "engines": {
     "node": ">=20"
@@ -15,5 +16,7 @@
   "dependencies": {
     "pg": "^8.13.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
 }

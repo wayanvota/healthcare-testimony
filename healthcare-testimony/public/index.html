@@ -16,6 +16,7 @@
         <div class="topbar-actions">
           <span class="status-dot" id="healthStatus">Checking</span>
           <button class="ghost" id="loadDemoButton" type="button">Load Demo</button>
+          <button class="ghost" id="historyButton" type="button">History</button>
         </div>
       </header>
 
@@ -165,12 +166,28 @@
               <div class="stack" id="questions"></div>
             </article>
 
+            <article class="module">
+              <div class="module-header">
+                <h2>CEO Data Readiness</h2>
+                <span id="dataCount">0 items</span>
+              </div>
+              <div class="stack" id="dataReadiness"></div>
+            </article>
+
             <article class="module rewrite-module">
               <div class="module-header">
                 <h2>Rewrite Workspace</h2>
                 <span id="rewriteCount">0 rewrites</span>
               </div>
               <div class="stack" id="rewrites"></div>
+            </article>
+
+            <article class="module rewrite-module">
+              <div class="module-header">
+                <h2>Saved Analysis History</h2>
+                <span id="historyCount">Not loaded</span>
+              </div>
+              <div class="stack" id="historyList"></div>
             </article>
           </section>
         </section>
