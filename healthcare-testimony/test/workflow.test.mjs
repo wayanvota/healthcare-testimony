@@ -45,9 +45,12 @@ function mockGet(server, url) {
     const res = {
       statusCode: 200,
       headers: {},
+      setHeader(name, value) {
+        this.headers[String(name).toLowerCase()] = value;
+      },
       writeHead(statusCode, headers) {
         this.statusCode = statusCode;
-        this.headers = headers;
+        this.headers = { ...this.headers, ...headers };
       },
       end(body = "") {
         resolve({ statusCode: this.statusCode, headers: this.headers, body: Buffer.isBuffer(body) ? body.toString("utf8") : String(body) });
