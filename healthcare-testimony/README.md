@@ -35,6 +35,7 @@ It has a separate project directory, app name, routing base path, database schem
 cd healthcare-testimony
 npm install
 npm test
+npm run test:e2e
 npm start
 ```
 
@@ -221,6 +222,28 @@ npm test
 ```
 
 Tests verify taxonomy mappings, high-risk AI/prior authorization extraction, negative alignment scoring against cited evidence, thin-evidence warnings, citation auditing, red-team evidence grounding, Markdown citations, local no-key startup, `BASE_PATH=/healthcare-testimony`, and standalone independence.
+
+The deterministic end-to-end suite starts the real HTTP server, drives Chromium through the primary testimony workflow, exercises downloads and jobs, and probes validation and security boundaries. It contains exactly 10 user-behavior categories (`U01`-`U10`) and 10 adversarial categories (`A01`-`A10`). No API keys, database, or public service are required.
+
+```bash
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+For the complete local and CI-equivalent check:
+
+```bash
+npm run test:ci
+```
+
+On failure, inspect `test-results/` and the HTML report in `playwright-report/`. GitHub Actions uploads both directories when the E2E job fails. Add new scenarios under `test/e2e/` and preserve the `U##` or `A##` category IDs so the report remains auditable.
+
+An optional live OpenAI smoke check is deliberately excluded from CI. It makes one Responses API request and never prints the credential or model response:
+
+```bash
+OPENAI_API_KEY=... npm run test:live:openai
+```
 
 Optional live QA against the public deployment:
 

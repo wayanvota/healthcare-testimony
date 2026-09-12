@@ -7,8 +7,11 @@
   "scripts": {
     "start": "node src/server.mjs",
     "worker": "node src/worker.mjs",
-    "test": "node --test",
-    "test:live": "playwright test test/live/healthcare-testimony-live.spec.ts"
+    "test": "node --test test/*.test.mjs",
+    "test:e2e": "playwright test test/e2e",
+    "test:ci": "npm test && npm run test:e2e",
+    "test:live:openai": "node test/live/openai-live-smoke.mjs",
+    "test:live": "playwright test --config=playwright.live.config.mjs"
   },
   "engines": {
     "node": ">=20"

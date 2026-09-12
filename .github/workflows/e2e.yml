@@ -1,0 +1,34 @@
+name: End-to-end tests
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  healthcare-testimony-e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: healthcare-testimony
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.16.0
+          cache: npm
+          cache-dependency-path: healthcare-testimony/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ci
+      - name: Upload Playwright evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: healthcare-testimony-playwright-evidence
+          path: |
+            healthcare-testimony/playwright-report/
+            healthcare-testimony/test-results/
+          retention-days: 14

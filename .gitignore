@@ -1,4 +1,6 @@
 .DS_Store
 **/.DS_Store
+**/node_modules/
 test-results/
 healthcare-testimony/test-results/
+healthcare-testimony/playwright-report/

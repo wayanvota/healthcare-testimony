@@ -16,7 +16,7 @@ import { ingestCongress, ingestGovInfo } from "./lib/ingestion.mjs";
 import { dbMode, getStoredJob, listStoredRuns, persistAnalysis } from "./lib/db.mjs";
 import { startScheduler } from "./lib/scheduler.mjs";
 import { DEMO_INPUT } from "./lib/fixtures.mjs";
-import { envConfig, jsonResponse, nowIso, readJsonBody, stableId } from "./lib/utils.mjs";
+import { envConfig, jsonResponse, MAX_JSON_BODY_BYTES, nowIso, readJsonBody, stableId } from "./lib/utils.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const rootDir = normalize(join(__dirname, ".."));
@@ -29,15 +29,17 @@ startScheduler(config);
 
 export function createAppServer() {
   return createServer(async (req, res) => {
+    applySecurityHeaders(res);
     try {
       const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
       const path = stripBasePath(url.pathname, config.basePath);
       if (path === null) return notFound(res);
-      if (path.startsWith("/api/")) return routeApi(req, res, path, url);
-      return serveStatic(req, res, path);
+      if (path.startsWith("/api/")) return await routeApi(req, res, path, url);
+      return await serveStatic(req, res, path);
     } catch (error) {
-      jsonResponse(res, error.statusCode || 500, {
-        error: error.message || "Internal server error",
+      const statusCode = Number(error.statusCode) || 500;
+      jsonResponse(res, statusCode, {
+        error: statusCode < 500 ? error.message : "Internal server error",
         app: "healthcare-testimony"
       });
     }
@@ -78,6 +80,10 @@ async function routeApi(req, res, path, url) {
   }
 
   if (req.method !== "POST") return notFound(res);
+  const contentLength = Number(req.headers["content-length"] || 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_JSON_BODY_BYTES) {
+    return jsonResponse(res, 413, { error: "Request body is too large.", app: "healthcare-testimony" });
+  }
   const body = await readJsonBody(req);
 
   if (path === "/api/analyze") {
@@ -169,6 +175,13 @@ function notFound(res) {
   return jsonResponse(res, 404, { error: "Not found", app: "healthcare-testimony" });
 }
 
+function applySecurityHeaders(res) {
+  res.setHeader("content-security-policy", "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
+  res.setHeader("referrer-policy", "no-referrer");
+  res.setHeader("x-content-type-options", "nosniff");
+  res.setHeader("x-frame-options", "DENY");
+}
+
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
   createAppServer().listen(config.port, "0.0.0.0", () => {
     console.log(`Healthcare CEO Senate Testimony Alignment Tool running at http://localhost:${config.port}${config.basePath}`);
@@ -181,7 +194,7 @@ async function safePersist(analysis) {
   } catch (error) {
     return {
       persisted: false,
-      error: error.message,
+      error: "Database persistence failed.",
       warning: "Analysis completed but database persistence failed."
     };
   }

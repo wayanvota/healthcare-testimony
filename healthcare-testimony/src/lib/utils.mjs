@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 export const DEFAULT_BASE_PATH = "/healthcare-testimony";
+export const MAX_JSON_BODY_BYTES = 1024 * 1024;
 
 export function envConfig(env = process.env) {
   const basePath = normalizeBasePath(env.BASE_PATH || DEFAULT_BASE_PATH);
@@ -40,9 +41,18 @@ export function jsonResponse(res, status, payload, headers = {}) {
   res.end(body);
 }
 
-export async function readJsonBody(req) {
+export async function readJsonBody(req, maxBytes = MAX_JSON_BODY_BYTES) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let receivedBytes = 0;
+  for await (const chunk of req) {
+    receivedBytes += chunk.length;
+    if (receivedBytes > maxBytes) {
+      const err = new Error("Request body is too large.");
+      err.statusCode = 413;
+      throw err;
+    }
+    chunks.push(chunk);
+  }
   const body = Buffer.concat(chunks).toString("utf8");
   if (!body.trim()) return {};
   try {
